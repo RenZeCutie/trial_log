@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lune OS | Member Portal</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #050505; color: #D4AF37;
+            font-family: 'Segoe UI', sans-serif; overflow: hidden;
+        }
+
+        /* ========================================
+           PERSISTENT LOGO TRANSITION
+           ======================================== */
+        #mainLogoContainer {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1000;
+            transition: all 1.5s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+
+        /* Desktop/Laptop: Logo moves to sidebar */
+        @media (min-width: 770px) {
+            body.is-logged-in #mainLogoContainer {
+                top: 5px;
+                left: 160px; 
+                transform: translate(-50%, 0) scale(0.55);
+            }
+        }
+
+        /* Mobile: Logo moves to top center, smaller */
+        @media (max-width: 769px) {
+            body.is-logged-in #mainLogoContainer {
+                top: 40px;
+                left: 50%;
+                transform: translate(-50%, 0) scale(0.4);
+            }
+        }
+
+        .glow-ring {
+            position: absolute; 
+            top: 45%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            width: 350px; 
+            height: 350px; 
+            border-radius: 50%;
+            box-shadow: 0 0 80px rgba(212, 175, 55, 0.3);
+            animation: pulse 4s infinite alternate; 
+            z-index: -1;
+        }
+
+        /* Smaller glow ring on mobile */
+        @media (max-width: 769px) {
+            .glow-ring {
+                width: 200px;
+                height: 200px;
+            }
+        }
+
+        .logo-splash {
+            max-width: 200px;
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.2));
+            animation: moveUp 3s ease-out forwards;
+        }
+
+        .member-text {
+            max-width: 120px;
+            height: auto;
+            margin-top: 10px;
+            opacity: 0;
+            filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
+            animation: fadeInText 2s ease-out 1.5s forwards;
+        }
+
+        /* ========================================
+           SIDEBAR (Desktop/Laptop only)
+           ======================================== */
+        .sidebar { 
+            width: 260px; 
+            border-right: 1px solid rgba(212, 175, 55, 0.2); 
+            padding: 30px; 
+            display: flex; 
+            flex-direction: column;
+            z-index: 10;
+            background: rgba(5, 5, 5, 0); 
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            transition: backdrop-filter 2s ease, background 2s ease; 
+        }
+
+        body.is-logged-in .sidebar {
+            background: rgba(5, 5, 5, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        /* Hide sidebar on mobile */
+        @media (max-width: 769px) {
+            .sidebar {
+                display: none;
+            }
+        }
+
+        /* ========================================
+           PROFILE CARD
+           ======================================== */
+        .profile-card {
+            background: rgba(0, 0, 0, 0.4); 
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+            min-width: 400px;
+            z-index: 10;
+        }
+
+        /* Mobile: Full-width card with padding */
+        @media (max-width: 769px) {
+            .profile-card {
+                min-width: auto;
+                width: calc(100% - 40px);
+                max-width: 500px;
+                margin: 0 20px;
+                padding: 30px 20px;
+            }
+        }
+
+        /* Small mobile: Even more compact */
+        @media (max-width: 480px) {
+            .profile-card {
+                padding: 25px 15px;
+                margin: 0 15px;
+                width: calc(100% - 30px);
+            }
+            
+            .profile-card h2 {
+                font-size: 0.9rem !important;
+                letter-spacing: 3px !important;
+            }
+            
+            .profile-card h1 {
+                font-size: 1.8rem !important;
+            }
+        }
+
+        /* ========================================
+           BACKGROUND & DASHBOARD
+           ======================================== */
+        #splashBackground {
+            position: fixed;
+            inset: 0;
+            background: #050505;
+            z-index: 999;
+            transition: opacity 1s ease;
+        }
+
+        #memberDashboard {
+            display: flex; 
+            height: 100vh; 
+            opacity: 0; 
+            visibility: hidden;
+            transition: opacity 1.5s ease 1s;
+        }
+
+        /* Mobile: Column layout */
+        @media (max-width: 769px) {
+            #memberDashboard {
+                flex-direction: column;
+                justify-content: flex-start;
+                overflow-y: auto;
+                padding-top: 150px; /* Space for logo */
+                padding-bottom: 20px;
+            }
+        }
+
+        body.is-logged-in #memberDashboard { 
+            opacity: 1; 
+            visibility: visible;
+        }
+
+        body.is-logged-in #splashBackground { 
+            opacity: 0; 
+            pointer-events: none; 
+        }
+
+        /* ========================================
+           CURSOR GLOW EFFECT
+           ======================================== */
+        #cursorGlow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1; 
+            transform: translate(-50%, -50%);
+            transition: opacity 1.5s ease;
+            opacity: 0; 
+        }
+
+        /* Smaller glow on mobile */
+        @media (max-width: 769px) {
+            #cursorGlow {
+                width: 300px;
+                height: 300px;
+            }
+        }
+
+        /* ========================================
+           RISING STARS CANVAS
+           ======================================== */
+        #starCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ========================================
+           MAIN CONTENT AREA
+           ======================================== */
+        .main { 
+            flex: 1; 
+            padding: 50px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+        }
+
+        /* Mobile: Adjust padding and spacing */
+        @media (max-width: 769px) {
+            .main {
+                padding: 20px 0;
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 15px 0;
+            }
+        }
+
+        /* ========================================
+           PROFILE ELEMENTS
+           ======================================== */
+        .profile-id { 
+            font-family: monospace; 
+            color: rgba(255, 255, 255, 0.5); 
+            font-size: 0.8rem; 
+            margin-top: 10px; 
+        }
+
+        .status-badge { 
+            color: #00ff00; 
+            font-size: 0.7rem; 
+            border: 1px solid #00ff00; 
+            padding: 4px 10px; 
+            display: inline-block; 
+            margin-top: 20px; 
+        }
+
+        /* ========================================
+           EXIT BUTTON
+           ======================================== */
+        .btn-exit { 
+            background: none; 
+            border: 1px solid #D4AF37; 
+            color: #D4AF37; 
+            padding: 8px 20px; 
+            cursor: pointer; 
+            margin-top: auto; 
+            transition: 0.3s; 
+            width: 100%; 
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+
+        .btn-exit:hover { 
+            background: #D4AF37; 
+            color: #000; 
+        }
+
+        /* Mobile: Exit button below card */
+        @media (max-width: 769px) {
+            .btn-exit-mobile {
+                display: block;
+                background: none;
+                border: 1px solid #D4AF37;
+                color: #D4AF37;
+                padding: 12px 20px;
+                cursor: pointer;
+                transition: 0.3s;
+                width: calc(100% - 40px);
+                max-width: 500px;
+                margin: 20px auto 0;
+                font-size: 0.75rem;
+                letter-spacing: 3px;
+            }
+            
+            .btn-exit-mobile:hover {
+                background: #D4AF37;
+                color: #000;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .btn-exit-mobile {
+                width: calc(100% - 30px);
+                margin: 15px auto 0;
+            }
+        }
+
+        /* ========================================
+           ANIMATIONS
+           ======================================== */
+        @keyframes moveUp { 
+            0% { transform: scale(0.8); opacity: 0; } 
+            100% { transform: scale(1) translateY(-15px); opacity: 1; } 
+        }
+
+        @keyframes pulse { 
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; } 
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; } 
+        }
+
+        @keyframes fadeInText { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="cursorGlow"></div>
+    <canvas id="starCanvas"></canvas>
+
+    <div id="mainLogoContainer">
+        <div class="glow-ring"></div>
+        <img src="../SS/LOG-IN PAGE/logomain.png" alt="Lune OS Logo" class="logo-splash">
+        <img src="../SS/LOG-IN PAGE/logo.png" alt="Admin Core" class="member-text">
+    </div>
+
+    <div id="splashBackground"></div>
+
+    <div id="memberDashboard">
+        <!-- Sidebar (Desktop/Laptop only) -->
+        <div class="sidebar">
+            <div style="height: 250px;"></div> 
+            <button class="btn-exit" onclick="location.reload()">END SESSION</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main">
+            <div class="profile-card">
+                <h2 style="letter-spacing: 5px; font-weight: 300; margin-bottom: 5px;">MEMBER IDENTITY</h2>
+                <hr style="border: 0; border-top: 1px solid rgba(212, 175, 55, 0.2); margin: 20px 0;">
+                
+                <h1 id="memberName" style="font-size: 2.5rem; margin: 10px 0;">USER NAME</h1>
+                <div id="memberId" class="profile-id">TIME AND DATE</div>
+                
+                <div class="status-badge">SESSION: ACTIVE</div>
+            </div>
+
+            <!-- Exit Button (Mobile only) -->
+            <button class="btn-exit-mobile" onclick="location.reload()">END SESSION</button>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // AUTO-LOAD SEQUENCE
+        // ========================================
+        window.onload = () => {
+            // Trigger the design transition immediately after 1 second
+            setTimeout(() => {
+                document.body.classList.add('is-logged-in');
+            }, 1000); 
+        };
+
+        // ========================================
+        // MOUSE TRACKER LOGIC (Cursor Glow)
+        // ========================================
+        const glow = document.getElementById('cursorGlow');
+        let mouseX = 0, mouseY = 0, ballX = 0, ballY = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            glow.style.opacity = "1";
+            mouseX = e.clientX; 
+            mouseY = e.clientY;
+        });
+
+        function animateGlow() {
+            ballX += (mouseX - ballX) * 0.08;
+            ballY += (mouseY - ballY) * 0.08;
+            glow.style.left = ballX + 'px';
+            glow.style.top = ballY + 'px';
+            requestAnimationFrame(animateGlow);
+        }
+        animateGlow();
+
+        // ========================================
+        // RISING STARS LOGIC
+        // ========================================
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initParticles() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            
+            // Adjust particle count based on screen size
+            const particleCount = window.innerWidth < 770 ? 60 : 120;
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.5 + 0.5,
+                    speed: Math.random() * 0.4 + 0.1,
+                    opacity: Math.random()
+                });
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(212, 175, 55, 0.7)"; 
+            particles.forEach(p => {
+                ctx.globalAlpha = p.opacity;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                p.y -= p.speed;
+                if (p.y < 0) p.y = canvas.height;
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', initParticles);
+        initParticles(); 
+        animateParticles();
+    </script>
+</body>
+</html>
