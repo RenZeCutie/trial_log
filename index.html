@@ -253,12 +253,38 @@
 
         /* Mobile: Adjust padding and spacing */
         @media (max-width: 769px) {
-            .main {
-                padding: 20px 0;
-                justify-content: center;
-                min-height: calc(100vh - 150px);
-            }
-        }
+    .main {
+        /* 1. Use the full screen height minus the logo area */
+        min-height: calc(100vh - 160px); 
+        
+        /* 2. Reset padding so it doesn't interfere with the 'Equal' math */
+        padding: 0; 
+        
+        /* 3. Use Flex Column to stack elements */
+        display: flex;
+        flex-direction: column;
+        
+        /* 4. This is the secret: 'space-evenly' puts equal air 
+              above, between, and below your items */
+        justify-content: space-evenly; 
+        align-items: center;
+        
+        /* 5. Ensure it doesn't get squeezed on small screens */
+        flex: 1;
+    }
+
+    /* Adjust the card margin to prevent it from touching the logo */
+    .profile-card {
+        margin: 0 20px;
+        /* Remove the manual bottom margin since the flex-gap handles it now */
+        margin-bottom: 0; 
+    }
+
+    /* Ensure the button doesn't have extra top margin fighting the flex math */
+    .btn-exit-mobile {
+        margin-top: 0; 
+    }
+}
 
         @media (max-width: 480px) {
             .main {
@@ -470,4 +496,5 @@
     </script>
 </body>
 </html>
+
 
