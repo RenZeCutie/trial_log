@@ -38,9 +38,9 @@
         /* Mobile: Logo moves to top center, smaller */
         @media (max-width: 769px) {
             body.is-logged-in #mainLogoContainer {
-                top: 40px;
+                top: 20px;
                 left: 50%;
-                transform: translate(-50%, 0) scale(0.4);
+                transform: translate(-50%, 0) scale(0.35);
             }
         }
 
@@ -131,7 +131,7 @@
                 width: calc(100% - 40px);
                 max-width: 500px;
                 margin: 0 20px;
-                padding: 30px 20px;
+                padding: 10px 20px;
             }
         }
 
@@ -193,6 +193,12 @@
             pointer-events: none; 
         }
 
+        body.is-logged-in .glow-ring {
+            width: 300px;
+            height: 300px;
+            transition: all 1.5s ease;
+        }
+
         /* ========================================
            CURSOR GLOW EFFECT
            ======================================== */
@@ -249,7 +255,8 @@
         @media (max-width: 769px) {
             .main {
                 padding: 20px 0;
-                justify-content: flex-start;
+                justify-content: center;
+                min-height: calc(100vh - 150px);
             }
         }
 
@@ -355,8 +362,8 @@
 
     <div id="mainLogoContainer">
         <div class="glow-ring"></div>
-        <img src="logomain.png" alt="Lune OS Logo" class="logo-splash">
-        <img src="logo.png" alt="Admin Core" class="member-text">
+        <img src="../SS/LOG-IN PAGE/logomain.png" alt="Lune OS Logo" class="logo-splash">
+        <img src="../SS/LOG-IN PAGE/logo.png" alt="Admin Core" class="member-text">
     </div>
 
     <div id="splashBackground"></div>
