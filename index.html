@@ -35,6 +35,15 @@
             }
         }
 
+        /* Mobile: Logo moves to top center, smaller */
+        @media (max-width: 769px) {
+            body.is-logged-in #mainLogoContainer {
+                top: 40px;
+                left: 50%;
+                transform: translate(-50%, 0) scale(0.4);
+            }
+        }
+
         .glow-ring {
             position: absolute; 
             top: 45%; 
@@ -46,6 +55,14 @@
             box-shadow: 0 0 80px rgba(212, 175, 55, 0.3);
             animation: pulse 4s infinite alternate; 
             z-index: -1;
+        }
+
+        /* Smaller glow ring on mobile */
+        @media (max-width: 769px) {
+            .glow-ring {
+                width: 200px;
+                height: 200px;
+            }
         }
 
         .logo-splash {
@@ -85,6 +102,13 @@
             -webkit-backdrop-filter: blur(8px);
         }
 
+        /* Hide sidebar on mobile */
+        @media (max-width: 769px) {
+            .sidebar {
+                display: none;
+            }
+        }
+
         /* ========================================
            PROFILE CARD
            ======================================== */
@@ -98,6 +122,35 @@
             -webkit-backdrop-filter: blur(12px);
             min-width: 400px;
             z-index: 10;
+        }
+
+        /* Mobile: Full-width card with padding */
+        @media (max-width: 769px) {
+            .profile-card {
+                min-width: auto;
+                width: calc(100% - 40px);
+                max-width: 500px;
+                margin: 0 20px;
+                padding: 30px 20px;
+            }
+        }
+
+        /* Small mobile: Even more compact */
+        @media (max-width: 480px) {
+            .profile-card {
+                padding: 25px 15px;
+                margin: 0 15px;
+                width: calc(100% - 30px);
+            }
+            
+            .profile-card h2 {
+                font-size: 0.9rem !important;
+                letter-spacing: 3px !important;
+            }
+            
+            .profile-card h1 {
+                font-size: 1.8rem !important;
+            }
         }
 
         /* ========================================
@@ -117,6 +170,17 @@
             opacity: 0; 
             visibility: hidden;
             transition: opacity 1.5s ease 1s;
+        }
+
+        /* Mobile: Column layout */
+        @media (max-width: 769px) {
+            #memberDashboard {
+                flex-direction: column;
+                justify-content: flex-start;
+                overflow-y: auto;
+                padding-top: 150px; /* Space for logo */
+                padding-bottom: 20px;
+            }
         }
 
         body.is-logged-in #memberDashboard { 
@@ -147,6 +211,14 @@
             opacity: 0; 
         }
 
+        /* Smaller glow on mobile */
+        @media (max-width: 769px) {
+            #cursorGlow {
+                width: 300px;
+                height: 300px;
+            }
+        }
+
         /* ========================================
            RISING STARS CANVAS
            ======================================== */
@@ -173,6 +245,23 @@
             justify-content: center; 
         }
 
+        /* Mobile: Adjust padding and spacing */
+        @media (max-width: 769px) {
+            .main {
+                padding: 20px 0;
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 15px 0;
+            }
+        }
+
+        /* ========================================
+           PROFILE ELEMENTS
+           ======================================== */
         .profile-id { 
             font-family: monospace; 
             color: rgba(255, 255, 255, 0.5); 
@@ -189,6 +278,9 @@
             margin-top: 20px; 
         }
 
+        /* ========================================
+           EXIT BUTTON
+           ======================================== */
         .btn-exit { 
             background: none; 
             border: 1px solid #D4AF37; 
@@ -207,68 +299,19 @@
             color: #000; 
         }
 
-        /* ========================================
-           MOBILE SPACING UPDATES (@769px)
-           ======================================== */
+        /* Mobile: Exit button below card */
         @media (max-width: 769px) {
-            .sidebar { display: none; }
-
-            .glow-ring {
-                width: 200px;
-                height: 200px;
-            }
-
-            #cursorGlow {
-                width: 300px;
-                height: 300px;
-            }
-
-            /* 1. Add space between the Logo and the Profile Card */
-            #memberDashboard {
-                flex-direction: column;
-                justify-content: flex-start;
-                align-items: center; 
-                overflow-y: auto;
-                padding-top: 180px;  /* Increased space for the logo */
-                padding-bottom: 40px; 
-                gap: 30px;           /* Creates automatic space between items */
-            }
-
-            /* 2. Fix Logo position so it doesn't overlap the card */
-            body.is-logged-in #mainLogoContainer {
-                top: 20px;           /* Moved higher up */
-                left: 50%;
-                transform: translate(-50%, 0) scale(0.4);
-            }
-
-            /* 3. Mobile Card Styling */
-            .profile-card {
-                min-width: auto;
-                width: calc(100% - 40px);
-                max-width: 500px;
-                margin: 0 20px;
-                padding: 30px 20px;
-                margin-bottom: 10px; 
-            }
-
-            .main {
-                padding: 20px 0;
-                justify-content: flex-start;
-                flex: none; /* Allow gap to work properly */
-            }
-
-            /* 4. Improve the Exit Button spacing */
             .btn-exit-mobile {
                 display: block;
                 background: none;
                 border: 1px solid #D4AF37;
                 color: #D4AF37;
-                padding: 15px 20px;
+                padding: 12px 20px;
                 cursor: pointer;
                 transition: 0.3s;
                 width: calc(100% - 40px);
                 max-width: 500px;
-                margin: 10px auto 0;
+                margin: 20px auto 0;
                 font-size: 0.75rem;
                 letter-spacing: 3px;
             }
@@ -279,17 +322,7 @@
             }
         }
 
-        /* Extra small mobile adjustments */
         @media (max-width: 480px) {
-            .profile-card {
-                padding: 25px 15px;
-                margin: 0 15px;
-                width: calc(100% - 30px);
-            }
-            
-            .profile-card h2 { font-size: 0.9rem !important; letter-spacing: 3px !important; }
-            .profile-card h1 { font-size: 1.8rem !important; }
-
             .btn-exit-mobile {
                 width: calc(100% - 30px);
                 margin: 15px auto 0;
@@ -329,11 +362,13 @@
     <div id="splashBackground"></div>
 
     <div id="memberDashboard">
+        <!-- Sidebar (Desktop/Laptop only) -->
         <div class="sidebar">
             <div style="height: 250px;"></div> 
             <button class="btn-exit" onclick="location.reload()">END SESSION</button>
         </div>
 
+        <!-- Main Content -->
         <div class="main">
             <div class="profile-card">
                 <h2 style="letter-spacing: 5px; font-weight: 300; margin-bottom: 5px;">MEMBER IDENTITY</h2>
@@ -345,17 +380,25 @@
                 <div class="status-badge">SESSION: ACTIVE</div>
             </div>
 
+            <!-- Exit Button (Mobile only) -->
             <button class="btn-exit-mobile" onclick="location.reload()">END SESSION</button>
         </div>
     </div>
 
     <script>
+        // ========================================
+        // AUTO-LOAD SEQUENCE
+        // ========================================
         window.onload = () => {
+            // Trigger the design transition immediately after 1 second
             setTimeout(() => {
                 document.body.classList.add('is-logged-in');
             }, 1000); 
         };
 
+        // ========================================
+        // MOUSE TRACKER LOGIC (Cursor Glow)
+        // ========================================
         const glow = document.getElementById('cursorGlow');
         let mouseX = 0, mouseY = 0, ballX = 0, ballY = 0;
 
@@ -374,6 +417,9 @@
         }
         animateGlow();
 
+        // ========================================
+        // RISING STARS LOGIC
+        // ========================================
         const canvas = document.getElementById('starCanvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -382,7 +428,10 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             particles = [];
+            
+            // Adjust particle count based on screen size
             const particleCount = window.innerWidth < 770 ? 60 : 120;
+            
             for (let i = 0; i < particleCount; i++) {
                 particles.push({
                     x: Math.random() * canvas.width,
