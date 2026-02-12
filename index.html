@@ -275,6 +275,26 @@
             z-index: 10;
         }
 
+        /* WORKOUT SELECTION STYLING */
+        #loginProgram {
+            background: rgba(0, 0, 0, 0.7);
+            color: #D4AF37;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+            width: 280px;
+            margin: 20px 0;
+            outline: none;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        #loginProgram:focus {
+            border-color: #D4AF37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
         #memberDashboard {
             display: flex; 
             height: 100vh; 
@@ -316,8 +336,8 @@
         @media (max-width: 769px) {
             .main {
                 justify-content: flex-start; 
-                padding-top: 250px;         
-                padding-bottom: 150px;       
+                padding-top: 200px;         
+                padding-bottom: 100px;       
             }
 
             .profile-card { 
@@ -395,35 +415,48 @@
             <img src="logo.png" alt="Admin Core" class="member-text">
         </div>
 
-       <div id="memberDashboard">
-    <div class="sidebar">
-        <div style="height: 250px;"></div> 
-        <button class="btn-exit" onclick="logoutSession()">LOG OUT</button>
-    </div>
-
-    <div class="main">
-        <div class="profile-card">
-            <h2 style="letter-spacing: 5px; font-weight: 300; margin-bottom: 5px;">MEMBER IDENTITY</h2>
-            <hr style="border: 0; border-top: 1px solid rgba(212, 175, 55, 0.2); margin: 20px 0;">
-            
-            <h1 id="memberName" style="font-size: 2.5rem; margin: 10px 0;">USER NAME</h1>
-            <div id="memberId" class="profile-id">LOADING TIME...</div>
-            
-            <div id="statusBadge" 
-                 class="status-badge" 
-                 onclick="toggleSession()" 
-                 style="cursor: pointer; transition: all 0.3s ease; user-select: none;">
-                 SESSION: ACTIVE
+        <div id="memberDashboard">
+            <div class="sidebar">
+                <div style="height: 250px;"></div> 
+                <button class="btn-exit" onclick="logoutSession()">LOG OUT</button>
             </div>
-            
-            <div id="sessionHint" style="font-size: 0.6rem; color: rgba(172, 162, 127, 0.5); margin-top: 8px; letter-spacing: 1px; text-transform: uppercase;">
-                 click only if finishing session
+
+            <div class="main">
+                <div class="profile-card">
+                    <h2 style="letter-spacing: 5px; font-weight: 300; margin-bottom: 5px;">MEMBER IDENTITY</h2>
+                    <hr style="border: 0; border-top: 1px solid rgba(212, 175, 55, 0.2); margin: 20px 0;">
+                    
+                    <h1 id="memberName" style="font-size: 2.5rem; margin: 10px 0;">USER NAME</h1>
+                    <div id="memberId" class="profile-id">LOADING TIME...</div>
+                    
+                    <div style="margin-top: 25px;">
+                        <label style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(212, 175, 55, 0.6);">Target Program</label><br>
+                        <select id="loginProgram">
+                            <option value="Strength Training">Strength Training</option>
+                            <option value="High-Intensity Interval Training (HIIT)">HIIT</option>
+                            <option value="Cardiovascular Workouts">Cardiovascular</option>
+                            <option value="Flexibility and Balance Workouts">Flexibility/Balance</option>
+                            <option value="Functional Training">Functional Training</option>
+                            <option value="Group Fitness Classes">Group Fitness</option>
+                        </select>
+                    </div>
+
+                    <div id="statusBadge" 
+                         class="status-badge" 
+                         onclick="toggleSession()" 
+                         style="cursor: pointer; transition: all 0.3s ease; user-select: none;">
+                         SESSION: ACTIVE
+                    </div>
+                    
+                    <div id="sessionHint" style="font-size: 0.6rem; color: rgba(172, 162, 127, 0.5); margin-top: 8px; letter-spacing: 1px; text-transform: uppercase;">
+                         click only if finishing session
+                    </div>
+                </div>
+
+                <button class="btn-exit-mobile" onclick="logoutSession()">LOG OUT</button>
             </div>
         </div>
-
-        <button class="btn-exit-mobile" onclick="logoutSession()">LOG OUT</button>
     </div>
-</div>
 
     <script>
         const SUPABASE_URL = 'https://urjktkgiskdrbnbraeyu.supabase.co';
@@ -446,9 +479,7 @@
         function animateParticles() { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "rgba(212, 175, 55, 0.7)"; particles.forEach(p => { ctx.globalAlpha = p.opacity; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); p.y -= p.speed; if (p.y < 0) p.y = canvas.height; }); requestAnimationFrame(animateParticles); }
         window.addEventListener('resize', initParticles); initParticles(); animateParticles();
 
-        // --- NEW: RECOGNITION & LOGGING HELPERS ---
-        
-        // Generates a simple device fingerprint stored in localStorage
+        // --- RECOGNITION & LOGGING HELPERS ---
         function getDeviceFingerprint() {
             let fingerprint = localStorage.getItem('lune_device_id');
             if (!fingerprint) {
@@ -462,7 +493,7 @@
             const fingerprint = getDeviceFingerprint();
             const today = new Date().toISOString().split('T')[0];
 
-            // 1. Record/Recognize Device
+            // 1. Record Device
             await supabaseClient.from('user_devices').upsert({
                 user_id: user.id,
                 device_fingerprint: fingerprint,
@@ -471,7 +502,7 @@
                 is_trusted: true
             }, { onConflict: 'device_fingerprint' });
 
-            // 2. Record Daily Log (Once per day)
+            // 2. Automated Daily Log Check - Just ensure the row exists
             const { data: existingLog } = await supabaseClient
                 .from('workout_logs')
                 .select('log_id')
@@ -480,15 +511,17 @@
                 .single();
 
             if (!existingLog) {
-                await supabaseClient.from('workout_logs').insert({
+                const { error } = await supabaseClient.from('workout_logs').insert({
                     user_id: user.id,
                     date: today,
-                    notes: 'User session recorded via Portal'
+                    notes: 'Session started via Lune OS Portal'
+                    // Workout program will be updated at the end
                 });
+                if (error) console.error("Initial log failed:", error.message);
             }
         }
 
-        // --- NAVIGATION LOGIC (UPDATED WITH AUTO-LOGIN) ---
+        // --- NAVIGATION LOGIC ---
         function goToSelection() { wrapper.classList.add('slide-to-selection'); }
         function goBackToSelection() { wrapper.classList.remove('slide-to-portal'); }
         
@@ -497,7 +530,6 @@
                 const btn = document.getElementById('btnContinue');
                 btn.innerText = "VERIFYING...";
 
-                // AUTO-LOGIN RECOGNITION
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (session) {
                     const { data: userData } = await supabaseClient.from('users').select('full_name').eq('user_id', session.user.id).single();
@@ -506,7 +538,6 @@
                     return;
                 }
 
-                // If no session, show login form
                 btn.innerText = "CONTINUE";
                 document.querySelectorAll('.portal-content').forEach(el => el.style.display = 'none');
                 document.getElementById('memberLoginForm').style.display = 'block';
@@ -517,42 +548,6 @@
         function toggleMemberView(view) {
             document.getElementById('memberLoginForm').style.display = view === 'login' ? 'block' : 'none';
             document.getElementById('memberRegisterForm').style.display = view === 'register' ? 'block' : 'none';
-        }
-
-        // --- AUTH LOGIC (ALIGNED WITH DATABASE SCHEMA) ---
-        async function memberRegister() {
-            const email = document.getElementById('regEmail').value.trim();     
-            const password = document.getElementById('regPass').value;
-            const confirm = document.getElementById('regPassConfirm').value;
-            const fullName = document.getElementById('regName').value.trim();
-
-            if (!email || !password || !fullName) { alert("Please fill in all fields."); return; }
-            if (password !== confirm) { alert("Passwords do not match!"); return; }
-
-            // 1. Create Auth User
-            const { data, error } = await supabaseClient.auth.signUp({ email, password });
-
-            if (error) { 
-                alert("Registration Error: " + error.message); 
-            } 
-            else if (data.user) {
-                // 2. Insert into your 'users' table (matches your screenshot columns)
-                const { error: dbError } = await supabaseClient.from('users').insert([{ 
-                    user_id: data.user.id, 
-                    full_name: fullName, 
-                    email: email 
-                    // password_hash is usually handled by Supabase Auth internally, 
-                    // but if your table requires it, you'd handle it here.
-                }]);
-
-                if (dbError) {
-                    console.error("Database sync error:", dbError.message);
-                }
-
-                await recordUserActivity(data.user);
-                alert("Registration Successful!");
-                toggleMemberView('login');
-            }
         }
 
         async function memberLogin() {
@@ -566,7 +561,6 @@
                 alert("Login Failed: " + error.message); 
             } 
             else {
-                // Fetch using 'full_name' to match your DB schema
                 const { data: userData } = await supabaseClient.from('users')
                     .select('full_name')
                     .eq('user_id', data.user.id)
@@ -583,7 +577,25 @@
             }
         }
 
-        // --- DASHBOARD LOGIC (UNTOUCHED) ---
+        // --- OTHER FUNCTIONS ---
+        async function memberRegister() {
+            const email = document.getElementById('regEmail').value.trim();     
+            const password = document.getElementById('regPass').value;
+            const confirm = document.getElementById('regPassConfirm').value;
+            const fullName = document.getElementById('regName').value.trim();
+            if (!email || !password || !fullName) { alert("Please fill in all fields."); return; }
+            if (password !== confirm) { alert("Passwords do not match!"); return; }
+
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) { alert("Registration Error: " + error.message); } 
+            else if (data.user) {
+                await supabaseClient.from('users').insert([{ user_id: data.user.id, full_name: fullName, email: email }]);
+                await recordUserActivity(data.user);
+                alert("Registration Successful!");
+                toggleMemberView('login');
+            }
+        }
+
         function switchToDashboard(userName) {
             wrapper.style.display = 'none';
             document.getElementById('memberName').innerText = userName.toUpperCase();
@@ -608,27 +620,45 @@
              location.reload();
         }
 
-    function toggleSession() {
-    const badge = document.getElementById('statusBadge');
-    const hint = document.getElementById('sessionHint');
-    
-    // Check current state
-    if (badge.innerText === "SESSION: ACTIVE") {
-        // Switch to FINISHED
-        badge.innerText = "SESSION: FINISHED";
-        badge.style.color = "#ff0000";
-        badge.style.borderColor = "#ff0000";
-        hint.style.opacity = "0"; // Mute the hint instead of display:none to prevent layout jump
-    } else {
-        // Switch back to ACTIVE
-        badge.innerText = "SESSION: ACTIVE";
-        badge.style.color = "#00ff00"; // Original green
-        badge.style.borderColor = "#00ff00";
-        hint.style.opacity = "1"; // Show hint again
-    }
-}
+        async function toggleSession() {
+            const badge = document.getElementById('statusBadge');
+            const hint = document.getElementById('sessionHint');
+            const programSelector = document.getElementById('loginProgram');
+            const today = new Date().toISOString().split('T')[0];
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (!session) return;
+
+            if (badge.innerText.includes("ACTIVE")) {
+                // FINISHING SESSION: Record the program selection NOW
+                const selectedProgram = programSelector.value;
+                
+                const { error } = await supabaseClient.from('workout_logs')
+                    .update({ 
+                        session_end: new Date().toISOString(),
+                        workout_program: selectedProgram 
+                    })
+                    .eq('user_id', session.user.id).eq('date', today);
+
+                if (error) return console.error(error.message);
+
+                badge.innerText = "SESSION: FINISHED";
+                badge.style.color = "#000"; badge.style.backgroundColor = "#ff4444";
+                badge.style.borderColor = "#ff4444"; badge.style.boxShadow = "0 0 20px rgba(255, 68, 68, 0.4)";
+                hint.style.opacity = "0"; 
+                programSelector.disabled = true; // Lock program selection once finished
+            } else {
+                // RE-ACTIVATING SESSION
+                await supabaseClient.from('workout_logs').update({ session_end: null })
+                    .eq('user_id', session.user.id).eq('date', today);
+                
+                badge.innerText = "SESSION: ACTIVE";
+                badge.style.color = "#00ff00"; badge.style.backgroundColor = "transparent";
+                badge.style.borderColor = "#00ff00"; badge.style.boxShadow = "none";
+                hint.style.opacity = "1";
+                programSelector.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>
-
-
