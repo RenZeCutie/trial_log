@@ -583,16 +583,34 @@
             const password = document.getElementById('regPass').value;
             const confirm = document.getElementById('regPassConfirm').value;
             const fullName = document.getElementById('regName').value.trim();
+
             if (!email || !password || !fullName) { alert("Please fill in all fields."); return; }
             if (password !== confirm) { alert("Passwords do not match!"); return; }
 
-            const { data, error } = await supabaseClient.auth.signUp({ email, password });
-            if (error) { alert("Registration Error: " + error.message); } 
+            const { data, error } = await supabaseClient.auth.signUp({ 
+                email, 
+                password 
+            });
+
+            if (error) { 
+                alert("Registration Error: " + error.message); 
+            } 
             else if (data.user) {
-                await supabaseClient.from('users').insert([{ user_id: data.user.id, full_name: fullName, email: email }]);
-                await recordUserActivity(data.user);
-                alert("Registration Successful!");
-                toggleMemberView('login');
+                // 1. Sync data to your public users table
+                await supabaseClient.from('users').insert([
+                    { user_id: data.user.id, full_name: fullName, email: email }
+                ]);
+
+                // 2. CHECK IF EMAIL CONFIRMATION IS REQUIRED
+                // If data.session is null, it means they MUST verify their email first
+                if (data.session === null) {
+                    alert("Account Created! Please check your Gmail to verify your identity before logging in.");
+                    toggleMemberView('login'); // Send them back to the login screen
+                } else {
+                    // If confirmation is off, log them in immediately
+                    await recordUserActivity(data.user);
+                    switchToDashboard(fullName);
+                }
             }
         }
 
@@ -662,3 +680,4 @@
     </script>
 </body>
 </html>
+
