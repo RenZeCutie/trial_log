@@ -372,23 +372,35 @@
             <img src="logo.png" alt="Admin Core" class="member-text">
         </div>
 
-        <div id="memberDashboard">
-            <div class="sidebar">
-                <div style="height: 250px;"></div> 
-                <button class="btn-exit" onclick="logoutSession()">END SESSION</button>
+       <div id="memberDashboard">
+    <div class="sidebar">
+        <div style="height: 250px;"></div> 
+        <button class="btn-exit" onclick="logoutSession()">LOG OUT</button>
+    </div>
+
+    <div class="main">
+        <div class="profile-card">
+            <h2 style="letter-spacing: 5px; font-weight: 300; margin-bottom: 5px;">MEMBER IDENTITY</h2>
+            <hr style="border: 0; border-top: 1px solid rgba(212, 175, 55, 0.2); margin: 20px 0;">
+            
+            <h1 id="memberName" style="font-size: 2.5rem; margin: 10px 0;">USER NAME</h1>
+            <div id="memberId" class="profile-id">LOADING TIME...</div>
+            
+            <div id="statusBadge" 
+                 class="status-badge" 
+                 onclick="toggleSession()" 
+                 style="cursor: pointer; transition: all 0.3s ease; user-select: none;">
+                 SESSION: ACTIVE
             </div>
-            <div class="main">
-                <div class="profile-card">
-                    <h2 style="letter-spacing: 5px; font-weight: 300; margin-bottom: 5px;">MEMBER IDENTITY</h2>
-                    <hr style="border: 0; border-top: 1px solid rgba(212, 175, 55, 0.2); margin: 20px 0;">
-                    <h1 id="memberName" style="font-size: 2.5rem; margin: 10px 0;">USER NAME</h1>
-                    <div id="memberId" class="profile-id">LOADING TIME...</div>
-                    <div class="status-badge">SESSION: ACTIVE</div>
-                </div>
-                <button class="btn-exit-mobile" onclick="logoutSession()">END SESSION</button>
+            
+            <div id="sessionHint" style="font-size: 0.6rem; color: rgba(172, 162, 127, 0.5); margin-top: 8px; letter-spacing: 1px; text-transform: uppercase;">
+                 click only if finishing session
             </div>
         </div>
+
+        <button class="btn-exit-mobile" onclick="logoutSession()">LOG OUT</button>
     </div>
+</div>
 
     <script>
         const SUPABASE_URL = 'https://urjktkgiskdrbnbraeyu.supabase.co';
@@ -551,6 +563,25 @@
              location.reload();
         }
 
+    function toggleSession() {
+    const badge = document.getElementById('statusBadge');
+    const hint = document.getElementById('sessionHint');
+    
+    // Check current state
+    if (badge.innerText === "SESSION: ACTIVE") {
+        // Switch to FINISHED
+        badge.innerText = "SESSION: FINISHED";
+        badge.style.color = "#ff0000";
+        badge.style.borderColor = "#ff0000";
+        hint.style.opacity = "0"; // Mute the hint instead of display:none to prevent layout jump
+    } else {
+        // Switch back to ACTIVE
+        badge.innerText = "SESSION: ACTIVE";
+        badge.style.color = "#00ff00"; // Original green
+        badge.style.borderColor = "#00ff00";
+        hint.style.opacity = "1"; // Show hint again
+    }
+}
     </script>
 </body>
 </html>
