@@ -8,7 +8,7 @@
     
     <style>
         /* ========================================
-           GLOBAL & RESET (UNTOUCHED)
+            GLOBAL & RESET (UNTOUCHED)
            ======================================== */
         body, html {
             margin: 0;
@@ -275,10 +275,6 @@
             z-index: 10;
         }
 
-        @media (max-width: 769px) {
-            .profile-card { min-width: auto; width: calc(100% - 40px); margin: 0 20px; padding: 10px 20px; }
-        }
-
         #memberDashboard {
             display: flex; 
             height: 100vh; 
@@ -314,6 +310,33 @@
         @keyframes fadeInText { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; } }
 
+        /* ========================================
+            SPECIFIC MOBILE FIXES
+           ======================================== */
+        @media (max-width: 769px) {
+            .main {
+                justify-content: flex-start; 
+                padding-top: 130px;         
+                padding-bottom: 60px;       
+            }
+
+            .profile-card { 
+                min-width: 0; 
+                width: calc(100% - 60px); 
+                padding: 25px 20px; 
+                margin: 0 auto; 
+            }
+            
+            #memberName {
+                font-size: 1.8rem !important; 
+            }
+
+            .btn-exit-mobile { 
+                display: block !important;  
+                margin: 30px auto 0;          
+                width: 70%;                 
+            }
+        }
     </style>
 </head>
 <body>
@@ -496,7 +519,7 @@
             document.getElementById('memberRegisterForm').style.display = view === 'register' ? 'block' : 'none';
         }
 
-        // --- AUTH LOGIC (UPDATED WITH LOGGING) ---
+        // --- AUTH LOGIC (ALIGNED WITH DATABASE SCHEMA) ---
         async function memberRegister() {
             const email = document.getElementById('regEmail').value.trim();     
             const password = document.getElementById('regPass').value;
@@ -506,11 +529,26 @@
             if (!email || !password || !fullName) { alert("Please fill in all fields."); return; }
             if (password !== confirm) { alert("Passwords do not match!"); return; }
 
+            // 1. Create Auth User
             const { data, error } = await supabaseClient.auth.signUp({ email, password });
 
-            if (error) { alert("Registration Error: " + error.message); } 
+            if (error) { 
+                alert("Registration Error: " + error.message); 
+            } 
             else if (data.user) {
-                await supabaseClient.from('users').insert([{ user_id: data.user.id, full_name: fullName, email: email }]);
+                // 2. Insert into your 'users' table (matches your screenshot columns)
+                const { error: dbError } = await supabaseClient.from('users').insert([{ 
+                    user_id: data.user.id, 
+                    full_name: fullName, 
+                    email: email 
+                    // password_hash is usually handled by Supabase Auth internally, 
+                    // but if your table requires it, you'd handle it here.
+                }]);
+
+                if (dbError) {
+                    console.error("Database sync error:", dbError.message);
+                }
+
                 await recordUserActivity(data.user);
                 alert("Registration Successful!");
                 toggleMemberView('login');
@@ -524,9 +562,16 @@
 
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-            if (error) { alert("Login Failed: " + error.message); } 
+            if (error) { 
+                alert("Login Failed: " + error.message); 
+            } 
             else {
-                const { data: userData } = await supabaseClient.from('users').select('full_name').eq('user_id', data.user.id).single();
+                // Fetch using 'full_name' to match your DB schema
+                const { data: userData } = await supabaseClient.from('users')
+                    .select('full_name')
+                    .eq('user_id', data.user.id)
+                    .single();
+                
                 await recordUserActivity(data.user);
                 
                 const displayName = userData ? userData.full_name : 'Explorer';
