@@ -3,17 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lune OS | Member Portal</title>
+    <title>Lune OS | Integrated Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
+        /* ========================================
+           GLOBAL & RESET
+           ======================================== */
         body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #050505; color: #D4AF37;
-            font-family: 'Segoe UI', sans-serif; overflow: hidden;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050505; 
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #D4AF37;
+        }
+
+        /* --- SHARED CURSOR GLOW EFFECT --- */
+        #cursorGlow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1; 
+            transform: translate(-50%, -50%);
+            transition: opacity 1.5s ease;
+            opacity: 0; 
+        }
+        @media (max-width: 769px) { #cursorGlow { width: 300px; height: 300px; } }
+
+        /* --- SHARED PARTICLE CANVAS --- */
+        #starCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
         }
 
         /* ========================================
-           PERSISTENT LOGO TRANSITION
+           CODE 1: LOGIN / SPLASH STYLES
            ======================================== */
+        .main-wrapper {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 300%; 
+            transition: transform 1.1s cubic-bezier(0.85, 0, 0.15, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slide-to-selection { transform: translateY(-33.333%); }
+        .slide-to-portal { transform: translateY(-66.666%); }
+
+        section {
+            width: 100%;
+            height: 33.333%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .login-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('logomain.png'); 
+            background-size: 40%;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(60px) brightness(0.4);
+            opacity: 0.8;
+            z-index: 0;
+        }
+
+        .splash-container {
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            position: relative;
+        }
+
+        /* Code 1 specific glow ring (slightly different animation than code 2) */
+        .splash-glow-ring {
+            position: absolute;
+            top: 45%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px; height: 350px;
+            border-radius: 50%;
+            box-shadow: 0 0 80px rgba(212, 175, 55, 0.3); 
+            animation: pulse 4s infinite alternate;
+            z-index: -1;
+        }
+
+        .logo {
+            max-width: 250px; 
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.2));
+            animation: moveUp 3s ease-out forwards;
+        }
+
+        .typography-img {
+            max-width: 100px; 
+            margin-top: -5px;
+            opacity: 0;
+            animation: fadeInText 2s ease-out 1.5s forwards;
+        }
+
+        .login-box {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            color: #D4AF37;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-width: 320px;
+        }
+
+        .portal-content { display: none; }
+
+        input {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            color: white;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            width: 250px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.05); 
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+            transform: translateY(-2px); 
+        }
+        
+        button {
+            background: #D4AF37;
+            border: none;
+            padding: 12px 30px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 8px;
+            color: #050505;
+            margin-top: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+         }
+
+        button:hover {
+            transform: scale(1.1); 
+            background: #fff; 
+            color: #000;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.8), 0 0 30px rgba(212, 175, 55, 0.4);
+         }
+
+        button:active { transform: scale(0.95); }
+
+        .secondary-btn { background: transparent; border: 1px solid #D4AF37; color: #D4AF37; margin-left: 5px; }
+
+        .back-link {
+            display: block; margin-top: 15px; font-size: 0.8rem;
+            color: rgba(212, 175, 55, 0.6); cursor: pointer; text-decoration: underline;
+        }
+
+        /* ========================================
+           CODE 2: DASHBOARD / INTERFACE STYLES
+           ======================================== */
+        
+        /* Container for the dashboard view (initially hidden) */
+        #dashboard-view {
+            display: none; 
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 100;
+        }
+
+        /* PERSISTENT LOGO TRANSITION */
         #mainLogoContainer {
             position: fixed;
             top: 50%;
@@ -44,7 +228,7 @@
             }
         }
 
-        .glow-ring {
+        .dash-glow-ring {
             position: absolute; 
             top: 45%; 
             left: 50%; 
@@ -57,13 +241,7 @@
             z-index: -1;
         }
 
-        /* Smaller glow ring on mobile */
-        @media (max-width: 769px) {
-            .glow-ring {
-                width: 200px;
-                height: 200px;
-            }
-        }
+        @media (max-width: 769px) { .dash-glow-ring { width: 200px; height: 200px; } }
 
         .logo-splash {
             max-width: 200px;
@@ -80,9 +258,7 @@
             animation: fadeInText 2s ease-out 1.5s forwards;
         }
 
-        /* ========================================
-           SIDEBAR (Desktop/Laptop only)
-           ======================================== */
+        /* SIDEBAR (Desktop/Laptop only) */
         .sidebar { 
             width: 260px; 
             border-right: 1px solid rgba(212, 175, 55, 0.2); 
@@ -102,16 +278,9 @@
             -webkit-backdrop-filter: blur(8px);
         }
 
-        /* Hide sidebar on mobile */
-        @media (max-width: 769px) {
-            .sidebar {
-                display: none;
-            }
-        }
+        @media (max-width: 769px) { .sidebar { display: none; } }
 
-        /* ========================================
-           PROFILE CARD
-           ======================================== */
+        /* PROFILE CARD */
         .profile-card {
             background: rgba(0, 0, 0, 0.4); 
             border: 1px solid rgba(212, 175, 55, 0.2);
@@ -124,7 +293,6 @@
             z-index: 10;
         }
 
-        /* Mobile: Full-width card with padding */
         @media (max-width: 769px) {
             .profile-card {
                 min-width: auto;
@@ -134,36 +302,13 @@
                 padding: 10px 20px;
             }
         }
-
-        /* Small mobile: Even more compact */
         @media (max-width: 480px) {
-            .profile-card {
-                padding: 25px 15px;
-                margin: 0 15px;
-                width: calc(100% - 30px);
-            }
-            
-            .profile-card h2 {
-                font-size: 0.9rem !important;
-                letter-spacing: 3px !important;
-            }
-            
-            .profile-card h1 {
-                font-size: 1.8rem !important;
-            }
+            .profile-card { padding: 25px 15px; margin: 0 15px; width: calc(100% - 30px); }
+            .profile-card h2 { font-size: 0.9rem !important; letter-spacing: 3px !important; }
+            .profile-card h1 { font-size: 1.8rem !important; }
         }
 
-        /* ========================================
-           BACKGROUND & DASHBOARD
-           ======================================== */
-        #splashBackground {
-            position: fixed;
-            inset: 0;
-            background: #050505;
-            z-index: 999;
-            transition: opacity 1s ease;
-        }
-
+        /* DASHBOARD CONTENT */
         #memberDashboard {
             display: flex; 
             height: 100vh; 
@@ -172,13 +317,12 @@
             transition: opacity 1.5s ease 1s;
         }
 
-        /* Mobile: Column layout */
         @media (max-width: 769px) {
             #memberDashboard {
                 flex-direction: column;
                 justify-content: flex-start;
                 overflow-y: auto;
-                padding-top: 150px; /* Space for logo */
+                padding-top: 150px; 
                 padding-bottom: 20px;
             }
         }
@@ -188,59 +332,13 @@
             visibility: visible;
         }
 
-        body.is-logged-in #splashBackground { 
-            opacity: 0; 
-            pointer-events: none; 
-        }
-
-        body.is-logged-in .glow-ring {
+        body.is-logged-in .dash-glow-ring {
             width: 300px;
             height: 300px;
             transition: all 1.5s ease;
         }
 
-        /* ========================================
-           CURSOR GLOW EFFECT
-           ======================================== */
-        #cursorGlow {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0) 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 1; 
-            transform: translate(-50%, -50%);
-            transition: opacity 1.5s ease;
-            opacity: 0; 
-        }
-
-        /* Smaller glow on mobile */
-        @media (max-width: 769px) {
-            #cursorGlow {
-                width: 300px;
-                height: 300px;
-            }
-        }
-
-        /* ========================================
-           RISING STARS CANVAS
-           ======================================== */
-        #starCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        /* ========================================
-           MAIN CONTENT AREA
-           ======================================== */
+        /* MAIN AREA */
         .main { 
             flex: 1; 
             padding: 50px; 
@@ -251,200 +349,147 @@
             justify-content: center; 
         }
 
-        /* Mobile: Adjust padding and spacing */
         @media (max-width: 769px) {
-    .main {
-        /* --- STEP 1: THE CONTAINER --- */
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start; /* Keeps items at the top so margins work */
-        padding: 0;
-        width: 100%;
-        
-        /* Ensures the container doesn't collapse */
-        min-height: calc(100vh - 50px); 
-    }
-
-    /* --- STEP 2: GAP BETWEEN LOGO AND CARD --- */
-    .profile-card {
-        /* CHANGE THE 80px BELOW TO ADJUST SPACE ABOVE THE CARD */
-        margin-top: 150px; 
-        
-        /* Keeps horizontal centering */
-        margin-left: 20px;
-        margin-right: 20px;
-        width: calc(100% - 40px);
-        max-width: 500px;
-    }
-
-    /* --- STEP 3: GAP BETWEEN CARD AND BUTTON --- */
-    .btn-exit-mobile {
-        /* CHANGE THE 40px BELOW TO ADJUST SPACE BELOW THE CARD */
-        margin-top: 60px; 
-
-        /* CHANGE THE 60px BELOW TO ADJUST SPACE AT THE VERY BOTTOM */
-        margin-bottom: 60px;
-
-        display: block;
-        width: calc(100% - 100px);
-        max-width: 500px;
-    }
-}
-
-        @media (max-width: 480px) {
             .main {
-                padding: 15px 0;
+                display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+                padding: 0; width: 100%; min-height: calc(100vh - 50px); 
             }
+            .profile-card { margin-top: 80px; margin-left: 20px; margin-right: 20px; width: calc(100% - 40px); max-width: 500px; }
+            .btn-exit-mobile { margin-top: 80px; margin-bottom: 60px; display: block; width: calc(100% - 40px); max-width: 500px; }
         }
+        @media (max-width: 480px) { .main { padding: 15px 0; } }
 
-        /* ========================================
-           PROFILE ELEMENTS
-           ======================================== */
         .profile-id { 
-            font-family: monospace; 
-            color: rgba(255, 255, 255, 0.5); 
-            font-size: 0.8rem; 
-            margin-top: 10px; 
+            font-family: monospace; color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; margin-top: 10px; 
         }
-
         .status-badge { 
-            color: #00ff00; 
-            font-size: 0.7rem; 
-            border: 1px solid #00ff00; 
-            padding: 4px 10px; 
-            display: inline-block; 
-            margin-top: 20px; 
+            color: #00ff00; font-size: 0.7rem; border: 1px solid #00ff00; padding: 4px 10px; display: inline-block; margin-top: 20px; 
         }
 
-        /* ========================================
-           EXIT BUTTON
-           ======================================== */
         .btn-exit { 
-            background: none; 
-            border: 1px solid #D4AF37; 
-            color: #D4AF37; 
-            padding: 8px 20px; 
-            cursor: pointer; 
-            margin-top: auto; 
-            transition: 0.3s; 
-            width: 100%; 
-            font-size: 0.8rem;
-            letter-spacing: 2px;
+            background: none; border: 1px solid #D4AF37; color: #D4AF37; padding: 8px 20px; cursor: pointer; margin-top: auto; transition: 0.3s; width: 100%; font-size: 0.8rem; letter-spacing: 2px;
+        }
+        .btn-exit:hover { background: #D4AF37; color: #000; }
+
+        .btn-exit-mobile {
+            display: none; background: none; border: 1px solid #D4AF37; color: #D4AF37; padding: 12px 20px; cursor: pointer; transition: 0.3s; margin: 20px auto 0; font-size: 0.75rem; letter-spacing: 3px;
+        }
+        .btn-exit-mobile:hover { background: #D4AF37; color: #000; }
+
+        /* SHARED ANIMATIONS */
+        @keyframes moveUp {
+            0% { transform: scale(0.8) translateY(0); opacity: 0; }
+            100% { transform: scale(1) translateY(-15px); opacity: 1; }
+        }
+        @keyframes fadeInText {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; }
         }
 
-        .btn-exit:hover { 
-            background: #D4AF37; 
-            color: #000; 
-        }
-
-        /* Mobile: Exit button below card */
-        @media (max-width: 769px) {
-            .btn-exit-mobile {
-                display: block;
-                background: none;
-                border: 1px solid #D4AF37;
-                color: #D4AF37;
-                padding: 12px 20px;
-                cursor: pointer;
-                transition: 0.3s;
-                width: calc(100% - 40px);
-                max-width: 500px;
-                margin: 20px auto 0;
-                font-size: 0.75rem;
-                letter-spacing: 3px;
-            }
-            
-            .btn-exit-mobile:hover {
-                background: #D4AF37;
-                color: #000;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .btn-exit-mobile {
-                width: calc(100% - 30px);
-                margin: 15px auto 0;
-            }
-        }
-
-        /* ========================================
-           ANIMATIONS
-           ======================================== */
-        @keyframes moveUp { 
-            0% { transform: scale(0.8); opacity: 0; } 
-            100% { transform: scale(1) translateY(-15px); opacity: 1; } 
-        }
-
-        @keyframes pulse { 
-            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; } 
-            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; } 
-        }
-
-        @keyframes fadeInText { 
-            from { opacity: 0; transform: translateY(10px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
     </style>
 </head>
 <body>
-    
+
     <div id="cursorGlow"></div>
     <canvas id="starCanvas"></canvas>
 
-    <div id="mainLogoContainer">
-        <div class="glow-ring"></div>
-        <img src="logomain.png" alt="Lune OS Logo" class="logo-splash">
-        <img src="logo.png" alt="Admin Core" class="member-text">
-    </div>
+    <div class="main-wrapper" id="masterWrapper">
+        
+        <section class="page-splash" onclick="goToSelection()">
+            <div class="splash-container">
+                <div class="splash-glow-ring"></div>
+                <img src="logomain.png" alt="Lune OS Logo" class="logo">
+                <img src="logo.png" alt="Lune OS Text" class="typography-img">
+            </div>
+        </section>
 
-    <div id="splashBackground"></div>
+        <section class="page-selection">
+            <div class="login-bg"></div>
+            <div class="login-box">
+                <h2>MEMBERSHIP PORTAL</h2>
+                <div style="margin-top: 20px;">
+                    <button onclick="openPortal('member')">CONTINUE</button>
+                </div>
+            </div>
+        </section>
 
-    <div id="memberDashboard">
-        <!-- Sidebar (Desktop/Laptop only) -->
-        <div class="sidebar">
-            <div style="height: 250px;"></div> 
-            <button class="btn-exit" onclick="location.reload()">END SESSION</button>
-        </div>
+        <section class="page-portal">
+            <div class="login-bg"></div>
 
-        <!-- Main Content -->
-        <div class="main">
-            <div class="profile-card">
-                <h2 style="letter-spacing: 5px; font-weight: 300; margin-bottom: 5px;">MEMBER IDENTITY</h2>
-                <hr style="border: 0; border-top: 1px solid rgba(212, 175, 55, 0.2); margin: 20px 0;">
-                
-                <h1 id="memberName" style="font-size: 2.5rem; margin: 10px 0;">USER NAME</h1>
-                <div id="memberId" class="profile-id">TIME AND DATE</div>
-                
-                <div class="status-badge">SESSION: ACTIVE</div>
+            <div id="memberLoginForm" class="portal-content login-box">
+                <h2>MEMBER LOGIN</h2>
+                <input type="email" id="loginEmail" placeholder="Email Address">
+                <input type="password" id="loginPass" placeholder="Password">
+                <br>
+                <button onclick="memberLogin()">Login</button>
+                <button class="secondary-btn" onclick="toggleMemberView('register')">Register</button>
+                <span class="back-link" onclick="goBackToSelection()">Go Back</span>
             </div>
 
-            <!-- Exit Button (Mobile only) -->
-            <button class="btn-exit-mobile" onclick="location.reload()">END SESSION</button>
+            <div id="memberRegisterForm" class="portal-content login-box">
+                <h2>CREATE ACCOUNT</h2>
+                <input type="text" id="regName" placeholder="Display Name">
+                <input type="email" id="regEmail" placeholder="Active Email">
+                <input type="password" id="regPass" placeholder="New Password">
+                <input type="password" id="regPassConfirm" placeholder="Re-enter Password">
+                <br>
+                <button onclick="memberRegister()">Register</button>
+                <button class="secondary-btn" onclick="toggleMemberView('login')">Back</button>
+            </div>
+        </section>
+    </div>
+
+    <div id="dashboard-view">
+        <div id="mainLogoContainer">
+            <div class="dash-glow-ring"></div>
+            <img src="logomain.png" alt="Lune OS Logo" class="logo-splash">
+            <img src="logo.png" alt="Admin Core" class="member-text">
+        </div>
+
+        <div id="memberDashboard">
+            <div class="sidebar">
+                <div style="height: 250px;"></div> 
+                <button class="btn-exit" onclick="logoutSession()">END SESSION</button>
+            </div>
+
+            <div class="main">
+                <div class="profile-card">
+                    <h2 style="letter-spacing: 5px; font-weight: 300; margin-bottom: 5px;">MEMBER IDENTITY</h2>
+                    <hr style="border: 0; border-top: 1px solid rgba(212, 175, 55, 0.2); margin: 20px 0;">
+                    
+                    <h1 id="memberName" style="font-size: 2.5rem; margin: 10px 0;">USER NAME</h1>
+                    <div id="memberId" class="profile-id">LOADING TIME...</div>
+                    
+                    <div class="status-badge">SESSION: ACTIVE</div>
+                </div>
+
+                <button class="btn-exit-mobile" onclick="logoutSession()">END SESSION</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // ========================================
-        // AUTO-LOAD SEQUENCE
-        // ========================================
-        window.onload = () => {
-            // Trigger the design transition immediately after 1 second
-            setTimeout(() => {
-                document.body.classList.add('is-logged-in');
-            }, 1000); 
-        };
+        // --- SUPABASE CONFIGURATION ---
+        const SUPABASE_URL = 'https://urjktkgiskdrbnbraeyu.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamt0a2dpc2tkcmJuYnJhZXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0ODU4NjUsImV4cCI6MjA4NTA2MTg2NX0.pNGwa2vGQVJXR7mUwRuQ7VfLw_Y8j6h3dtHdIVO7Vgk'; 
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ========================================
-        // MOUSE TRACKER LOGIC (Cursor Glow)
-        // ========================================
+        const wrapper = document.getElementById('masterWrapper');
+        const dashboardView = document.getElementById('dashboard-view');
+        
+        // --- SHARED VISUALS (Cursor & Particles) ---
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
         const glow = document.getElementById('cursorGlow');
         let mouseX = 0, mouseY = 0, ballX = 0, ballY = 0;
 
         window.addEventListener('mousemove', (e) => {
-            glow.style.opacity = "1";
-            mouseX = e.clientX; 
-            mouseY = e.clientY;
+            glow.style.opacity = "1"; 
+            mouseX = e.clientX; mouseY = e.clientY;
         });
 
         function animateGlow() {
@@ -456,22 +501,13 @@
         }
         animateGlow();
 
-        // ========================================
-        // RISING STARS LOGIC
-        // ========================================
-        const canvas = document.getElementById('starCanvas');
-        const ctx = canvas.getContext('2d');
         let particles = [];
-
         function initParticles() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             particles = [];
-            
-            // Adjust particle count based on screen size
-            const particleCount = window.innerWidth < 770 ? 60 : 120;
-            
-            for (let i = 0; i < particleCount; i++) {
+            const count = window.innerWidth < 770 ? 60 : 120;
+            for (let i = 0; i < count; i++) {
                 particles.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
@@ -495,18 +531,156 @@
             });
             requestAnimationFrame(animateParticles);
         }
-
         window.addEventListener('resize', initParticles);
-        initParticles(); 
-        animateParticles();
+        initParticles(); animateParticles();
+
+        // --- SECTION 1: NAVIGATION LOGIC ---
+        function goToSelection() {
+            wrapper.classList.add('slide-to-selection');
+        }
+        function goBackToSelection() {
+            wrapper.classList.remove('slide-to-portal');
+        }
+        function openPortal(type) {
+            document.querySelectorAll('.portal-content').forEach(el => el.style.display = 'none');
+            if (type === 'member') document.getElementById('memberLoginForm').style.display = 'block';
+            wrapper.classList.add('slide-to-portal');
+        }
+        function toggleMemberView(view) {
+            document.getElementById('memberLoginForm').style.display = view === 'login' ? 'block' : 'none';
+            document.getElementById('memberRegisterForm').style.display = view === 'register' ? 'block' : 'none';
+        }
+
+        // --- AUTH LOGIC ---
+        async function memberRegister() {
+            const email = document.getElementById('regEmail').value.trim();     
+            const password = document.getElementById('regPass').value;
+            const confirm = document.getElementById('regPassConfirm').value;
+            const fullName = document.getElementById('regName').value.trim();
+
+            if (!email || !password || !fullName) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            if (password !== confirm) {
+                alert("Passwords do not match!");
+                return;
+            }
+
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                alert("Registration Error: " + error.message);
+            } else if (data.user) {
+                const { error: dbError } = await supabaseClient
+                    .from('users')
+                    .insert([
+                        { 
+                            user_id: data.user.id,
+                            full_name: fullName,
+                            email: email 
+                        }
+                    ]);
+
+                if (dbError) {
+                    alert("Account created, but profile setup failed.");
+                } else {
+                    alert("Registration Successful! Please check your email.");
+                    toggleMemberView('login');
+                }
+            }
+        }
+
+        async function memberLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPass').value;
+            const btn = document.querySelector("#memberLoginForm button");
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                alert("Login Failed: " + error.message);
+            } else {
+                const { data: userData } = await supabaseClient
+                    .from('users')
+                    .select('full_name')
+                    .eq('user_id', data.user.id)
+                    .single();
+
+                const displayName = userData ? userData.full_name : 'Explorer';
+                
+                btn.innerText = "ACCESS GRANTED...";
+                btn.style.background = "#00ff00";
+                btn.style.color = "#000";
+
+                // INSTEAD OF REDIRECTING, SWITCH INTERFACE
+                setTimeout(() => {
+                    switchToDashboard(displayName);
+                }, 800);
+            }
+        }
+
+        // --- SECTION 2: DASHBOARD LOGIC (Transition & Realtime) ---
+        
+        function switchToDashboard(userName) {
+            // 1. Hide the Login Wrapper
+            wrapper.style.display = 'none';
+
+            // 2. Prepare the Dashboard Data
+            document.getElementById('memberName').innerText = userName.toUpperCase();
+            startRealTimeClock();
+
+            // 3. Show Dashboard Container
+            dashboardView.style.display = 'block';
+
+            // 4. Trigger Animations (Add class to body)
+            // Small timeout ensures CSS transitions catch the state change
+            setTimeout(() => {
+                document.body.classList.add('is-logged-in');
+            }, 100);
+        }
+
+        function startRealTimeClock() {
+            const timeElement = document.getElementById('memberId');
+            
+            function update() {
+                const now = new Date();
+                
+                // Format Time: HH:MM:SS AM/PM
+                const timeString = now.toLocaleTimeString('en-US', { 
+                    hour12: true, 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit' 
+                });
+
+                // Format Date: Month DD, YYYY
+                const dateString = now.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'short'
+                });
+
+                timeElement.innerText = `${timeString} | ${dateString.toUpperCase()}`;
+            }
+            
+            update(); // Run immediately
+            setInterval(update, 1000); // Update every second
+        }
+
+        function logoutSession() {
+             // Simple reload to reset the state back to login
+             location.reload();
+        }
+
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
